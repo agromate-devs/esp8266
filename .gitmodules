@@ -1,0 +1,3 @@
+[submodule "components/ESP8266-RTOS-DHT"]
+	path = components/ESP8266-RTOS-DHT
+	url = https://github.com/Fonger/ESP8266-RTOS-DHT.git

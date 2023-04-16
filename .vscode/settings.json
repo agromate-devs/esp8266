@@ -1,0 +1,27 @@
+{
+    "files.associations": {
+        "dht.h": "c",
+        "freertos.h": "c",
+        "esp_event.h": "c",
+        "task.h": "c",
+        "esp_wifi.h": "c",
+        "wifi.h": "c",
+        "esp_http_server.h": "c",
+        "err.h": "c",
+        "cjson.h": "c",
+        "esp_log.h": "c",
+        "*.inc": "c",
+        "esp_system.h": "c",
+        "smartconfig_ack.h": "c",
+        "esp_smartconfig.h": "c",
+        "nvs_flash.h": "c"
+    },
+    "cmake.configureOnOpen": true,
+    "cmake.configureSettings": {
+        "COMPILER": "xtensa-esp32",
+        "CMAKE_C_COMPILER_WORKS": "TRUE",
+        "VENDOR": "espressif",
+        "BOARD": "esp32_wrover_kit"
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}

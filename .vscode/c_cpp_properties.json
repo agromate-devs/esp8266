@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "ESP",
+            "includePath": [
+                "${workspaceRoot}/main/**",
+                "/home/andreock/esp/ESP8266_RTOS_SDK/components/**"
+            ],
+            "defines": [
+                "NDEBUG",
+                "__BSD_VISIBLE",
+                "__XSI_VISIBLE=500",
+                "LOG_LOCAL_LEVEL=ESP_LOG_VERBOSE",
+                "CONFIG_LOG_TIMESTAMP_SOURCE_RTOS",
+                "CONFIG_FREERTOS_HZ=100"
+            ],
+            "compilerPath": "xtensa-lx106-elf-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
