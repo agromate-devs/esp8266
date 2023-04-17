@@ -1,0 +1,1 @@
+char *create_dht_json(int temp, int hum);

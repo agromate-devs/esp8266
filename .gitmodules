@@ -1,3 +1,6 @@
 [submodule "components/ESP8266-RTOS-DHT"]
 	path = components/ESP8266-RTOS-DHT
 	url = https://github.com/Fonger/ESP8266-RTOS-DHT.git
+[submodule "components/cjson"]
+	path = components/cjson
+	url = https://github.com/DaveGamble/cJSON.git

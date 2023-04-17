@@ -14,7 +14,13 @@
         "esp_system.h": "c",
         "smartconfig_ack.h": "c",
         "esp_smartconfig.h": "c",
-        "nvs_flash.h": "c"
+        "nvs_flash.h": "c",
+        "*.contiki": "c",
+        "semphr.h": "c",
+        "secrets.h": "c",
+        "netdb.h": "c",
+        "mqtt_client.h": "c",
+        "sockets.h": "c"
     },
     "cmake.configureOnOpen": true,
     "cmake.configureSettings": {
