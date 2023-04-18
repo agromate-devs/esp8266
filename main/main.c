@@ -46,18 +46,20 @@
 static int subscribed = 0;
 static esp_mqtt_client_handle_t client;
 
-extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
-extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
-extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
-extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
-
 void temperature_task(void *arg)
 {
+    int *temp_history_hour = malloc(sizeof(int) * 60);
+    int *humidity_history_hour = malloc(sizeof(int) * 60);
+    if(temp_history_hour == NULL || humidity_history_hour == NULL){
+        ESP_LOGE("dht11", "Error allocating memory. Free memory %d", esp_get_free_heap_size());
+    }
+
     ESP_ERROR_CHECK(dht_init(DHT_GPIO, false));
     DELAY(2000);
     int16_t humidity = 0;
     int16_t temperature = 0;
     int msg_id = 0;
+    int current_minute = 0;
     while (1)
     {
         if (dht_read_data(DHT_TYPE_DHT11, DHT_GPIO, &humidity, &temperature) == ESP_OK) {
@@ -65,17 +67,31 @@ void temperature_task(void *arg)
             ESP_LOGI("DHT11", "Humidity: %d Temperature: %d\n", humidity, temperature);
 #endif
         if(subscribed){
+            if(current_minute == 59) {  // 60 finish to 59 since we start from 0
+                int *media_temp = 0;
+                int *media_hum = 0;
+                for (size_t i = 0; i < 60; i++) 
+                {
+                    *media_temp += temp_history_hour[i];
+                    *media_hum += humidity_history_hour[i];
+                }
+                *media_temp = *media_temp / 60;
+                *media_hum = *media_hum / 60;
+                memset(temp_history_hour, 0, sizeof(int) * 60); // Cleanup array from old misurations
+                memset(humidity_history_hour, 0, sizeof(int) * 60);
+                char *message = create_dht_json(*media_temp, *media_hum);
+                msg_id = esp_mqtt_client_publish(client, PUB, message, 0, 0, 0);
 #ifdef DEBUG
-            ESP_LOGI("DHT11", "Sending message");
+            ESP_LOGI("DHT11_MQTT", "Message ID: %d\n", msg_id);
+            ESP_LOGI("DHT11", "Freeing memory");
 #endif
-            char *message = create_dht_json(temperature, humidity);
-#ifdef DEBUG
-            ESP_LOGI("DHT11", message);
-#endif
-            msg_id = esp_mqtt_client_publish(client, PUB, message, 0, 0, 0);
-#ifdef DEBUG
-            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
-#endif
+                free(media_hum);
+                free(media_temp);
+                current_minute = 0;
+            }
+            temp_history_hour[current_minute] = temperature;
+            humidity_history_hour[current_minute] = humidity;
+            current_minute++;
         }
         } else {
             ESP_LOGE("DHT11", "Fail to get dht temperature data\n");

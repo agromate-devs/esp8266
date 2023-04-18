@@ -11,12 +11,14 @@ char *create_dht_json(int temp, int hum){
     
     cJSON *temperature = cJSON_CreateNumber((temp / 10));
     cJSON *humidity = cJSON_CreateNumber((hum / 10));
+    cJSON *hour = cJSON_CreateBool(1);
 
     if(temperature == NULL || humidity == NULL)
         goto end;
 
     cJSON_AddItemToObject(message, "temperature", temperature);
     cJSON_AddItemToObject(message, "humidity", humidity);
+    cJSON_AddItemToObject(message, "hour", hour);
     json_string = cJSON_Print(message);
     if (json_string == NULL)
     {

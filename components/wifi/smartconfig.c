@@ -1,5 +1,5 @@
 /* 
- * This file is part of the XXX distribution (https://github.com/xxxx or http://xxx.github.io).
+ * This file is part of the Serra project (https://github.com/xxxx or http://xxx.github.io).
  * Copyright (c) 2023 Andrea Canale.
  * 
  * This program is free software: you can redistribute it and/or modify  
