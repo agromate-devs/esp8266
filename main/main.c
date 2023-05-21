@@ -36,6 +36,7 @@
 #include "secrets.h"
 #include "mqtt_client.h"
 #include "json.h"
+#include "uuid.h"
 
 #define TAG "MQTT"
 #define SUB "esp8266/sub"
@@ -45,6 +46,7 @@
 
 static int subscribed = 0;
 static esp_mqtt_client_handle_t client;
+static char *uuid = "";
 
 void temperature_task(void *arg)
 {
@@ -79,7 +81,7 @@ void temperature_task(void *arg)
                 *media_hum = *media_hum / 60;
                 memset(temp_history_hour, 0, sizeof(int) * 60); // Cleanup array from old misurations
                 memset(humidity_history_hour, 0, sizeof(int) * 60);
-                char *message = create_dht_json(*media_temp, *media_hum);
+                char *message = create_dht_json(*media_temp, *media_hum, uuid);
                 msg_id = esp_mqtt_client_publish(client, PUB, message, 0, 0, 0);
 #ifdef DEBUG
             ESP_LOGI("DHT11_MQTT", "Message ID: %d\n", msg_id);
@@ -165,6 +167,11 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     return ESP_OK;
 }
 
+static int uuid_exists() {
+    char *uuid = read_key("uuid", UUID_LEN);
+    return (uuid!= NULL);
+}
+
 static void mqtt_app_start(void)
 {
     const esp_mqtt_client_config_t mqtt_cfg = {
@@ -214,6 +221,15 @@ void app_main(void)
         ESP_LOGI("main", "not registered");
 #endif
         initialise_smartconfig();
+    }
+    if(uuid_exists() == 0) {
+        char *uuid = generate_uuid();
+        write_key("uuid", uuid);
+        free(uuid);
+    }else {
+        uuid = malloc(sizeof(char)* UUID_LEN);
+        uuid = read_key("uuid", UUID_LEN);
+        ESP_LOGI("UUID", "UUID: %s", uuid);
     }
     mqtt_app_start();
     xTaskCreate(temperature_task, "temperature task", 2048, NULL, tskIDLE_PRIORITY, NULL);
