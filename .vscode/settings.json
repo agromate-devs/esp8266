@@ -20,7 +20,8 @@
         "secrets.h": "c",
         "netdb.h": "c",
         "mqtt_client.h": "c",
-        "sockets.h": "c"
+        "sockets.h": "c",
+        "queue.h": "c"
     },
     "cmake.configureOnOpen": true,
     "cmake.configureSettings": {
@@ -29,5 +30,6 @@
         "VENDOR": "espressif",
         "BOARD": "esp32_wrover_kit"
     },
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "idf.adapterTargetName": "esp8266"
 }

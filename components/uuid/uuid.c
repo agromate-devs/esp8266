@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "../keystore/keystore.h"
 
 #define UUID_LEN 37
 
@@ -25,4 +26,9 @@ char* generate_uuid(void) {
     buf[36] = '\0';
 
     return buf;
+}
+
+int uuid_exists() {
+    char *uuid = read_key("uuid", UUID_LEN);
+    return (uuid!= NULL);
 }

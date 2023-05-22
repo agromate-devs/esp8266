@@ -1,7 +1,7 @@
 #include "cJSON.h"
 #include <stdio.h>
 
-char *create_dht_json(int temp, int hum, char *uuid){
+char *create_dht_json(int temp, int hum, int soil_hum, char *uuid){
     char *json_string = NULL;
     cJSON *message = cJSON_CreateObject();
     if (message == NULL)
@@ -11,6 +11,7 @@ char *create_dht_json(int temp, int hum, char *uuid){
     
     cJSON *temperature = cJSON_CreateNumber((temp / 10));
     cJSON *humidity = cJSON_CreateNumber((hum / 10));
+    cJSON *soil_humidity = cJSON_CreateNumber((soil_hum / 10));
     cJSON *hour = cJSON_CreateBool(1);
     cJSON *media_month = cJSON_CreateBool(0);
     cJSON *uuid_json = cJSON_CreateString(uuid);
@@ -20,6 +21,7 @@ char *create_dht_json(int temp, int hum, char *uuid){
 
     cJSON_AddItemToObject(message, "temperature", temperature);
     cJSON_AddItemToObject(message, "humidity", humidity);
+    cJSON_AddItemToObject(message, "soil_humidity", soil_humidity);
     cJSON_AddItemToObject(message, "hour", hour);
     cJSON_AddItemToObject(message, "media_month", media_month);
     cJSON_AddItemToObject(message, "uuid", uuid_json);
