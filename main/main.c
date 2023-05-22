@@ -65,9 +65,6 @@ void temperature_task(void *arg)
     while (1)
     {
         if (dht_read_data(DHT_TYPE_DHT11, DHT_GPIO, &humidity, &temperature) == ESP_OK) {
-#ifdef DEBUG
-            ESP_LOGI("DHT11", "Humidity: %d Temperature: %d\n", humidity, temperature);
-#endif
         if(subscribed){
             if(current_minute == 59) {  // 60 finish to 59 since we start from 0
                 int *media_temp = 0;
@@ -83,10 +80,6 @@ void temperature_task(void *arg)
                 memset(humidity_history_hour, 0, sizeof(int) * 60);
                 char *message = create_dht_json(*media_temp, *media_hum, uuid);
                 msg_id = esp_mqtt_client_publish(client, PUB, message, 0, 0, 0);
-#ifdef DEBUG
-            ESP_LOGI("DHT11_MQTT", "Message ID: %d\n", msg_id);
-            ESP_LOGI("DHT11", "Freeing memory");
-#endif
                 free(media_hum);
                 free(media_temp);
                 current_minute = 0;
@@ -119,57 +112,24 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     int msg_id = 0;
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED:
-#ifdef DEBUG
-            ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-#endif
             msg_id = esp_mqtt_client_subscribe(client, SUB, 0);
-#ifdef DEBUG
-            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-#endif
             break;
         case MQTT_EVENT_DISCONNECTED:
-#ifdef DEBUG
-            ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
-#endif
             subscribed = 0;
             break;
         case MQTT_EVENT_SUBSCRIBED:
-#ifdef DEBUG
-            ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-#endif
             subscribed = 1;
             break;
         case MQTT_EVENT_UNSUBSCRIBED:
-#ifdef DEBUG
-            ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
-#endif
             subscribed = 0;
             break;
-#ifdef DEBUG
-        case MQTT_EVENT_PUBLISHED:
-            ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
-            break;
-        case MQTT_EVENT_DATA:
-            ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-            printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-            printf("DATA=%.*s\r\n", event->data_len, event->data);
-            break;
-#endif
         case MQTT_EVENT_ERROR:
             ESP_LOGE(TAG, "MQTT_EVENT_ERROR");
             break;
         default:
-#ifdef DEBUG
-            ESP_LOGI(TAG, "Other event id:%d", event->event_id);
-#endif
             break;
     }
     return ESP_OK;
-}
-
-static int uuid_exists() {
-    char *uuid = read_key("uuid", UUID_LEN);
-    return (uuid!= NULL);
 }
 
 static void mqtt_app_start(void)
@@ -181,45 +141,27 @@ static void mqtt_app_start(void)
         .client_key_pem = privkey,
         .client_id = "ESP8266_Wemos",
     };
-#ifdef DEBUG
-    ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
-#endif
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_start(client);
 }
 
 void app_main(void)
 {
-#ifdef DEBUG
     ESP_LOGI(TAG, "[APP] Startup..");
     ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
     ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());
 
-    esp_log_level_set("*", ESP_LOG_INFO);
-    esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
-    esp_log_level_set("TRANSPORT_TCP", ESP_LOG_VERBOSE);
-    esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
-    esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
-    esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
-#endif
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
 
     if(is_already_registered()){
         char *ssid = read_key("ssid", 32);
         char *password = read_key("password", 64);
-#ifdef DEBUG
-        ESP_LOGI("main", "already registered");
-#endif
         wifi_init_sta(ssid, password);
-
         // We can destroy the SSID and password now that are stored in wifi_config and save some bytes.
         free(ssid);
         free(password);
     }else {
-#ifdef DEBUG
-        ESP_LOGI("main", "not registered");
-#endif
         initialise_smartconfig();
     }
     if(uuid_exists() == 0) {
