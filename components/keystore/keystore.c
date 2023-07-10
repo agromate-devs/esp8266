@@ -50,3 +50,9 @@ void write_key(char *key, char *value){
 
     ESP_ERROR_CHECK(nvs_commit(my_handle));
 }
+
+void clear_key(char *key){
+    nvs_handle_t my_handle;
+    ESP_ERROR_CHECK(nvs_open(STORAGE, NVS_READWRITE, &my_handle));
+    nvs_erase_key(my_handle, key);
+}
