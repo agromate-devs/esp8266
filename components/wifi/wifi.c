@@ -14,6 +14,8 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+#include "smartconfig.h"
+
 #define EXAMPLE_ESP_MAXIMUM_RETRY 5
 #define SSID_LENGTH 32
 #define PASSWORD_LENGTH 64
@@ -131,7 +133,7 @@ int is_already_registered()
 {
     char *ssid = read_key("ssid", 32);
     char *password = read_key("password", 64);
-    if (ssid == NULL || password == NULL)
+    if (ssid == NULL || password == NULL)   // Password never existed or cleaned NVS
     {
         return 0;
     }
@@ -148,4 +150,11 @@ void init_wifi_connection()
     // We can destroy the SSID and password now that are stored in wifi_config and save some bytes.
     free(ssid);
     free(password);
+}
+
+void reset_wifi_credentials() {
+    clear_key("ssid");
+    clear_key("password");
+    ESP_LOGW(TAG, "Starting smartconfig");
+    initialise_smartconfig();
 }
