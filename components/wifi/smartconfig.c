@@ -29,6 +29,7 @@
 #include "esp_smartconfig.h"
 #include "smartconfig_ack.h"
 #include "keystore.h"
+#include "wifi.h"
 
 #define EXAMPLE_ESP_SMARTCOFNIG_TYPE CONFIG_ESP_SMARTCONFIG_TYPE    // EspTouch v2
 
@@ -115,12 +116,11 @@ void smartconfig_example_task(void* parm)
 
     while (1) {
         uxBits = xEventGroupWaitBits(s_wifi_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY);
-    
-#ifdef DEBUG
+
         if (uxBits & CONNECTED_BIT) {
+            wifi_connected = 1;
             ESP_LOGI(TAG, "WiFi Connected to ap");
         }
-#endif
 
         if (uxBits & ESPTOUCH_DONE_BIT) {
 #ifdef DEBUG

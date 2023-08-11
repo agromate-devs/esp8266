@@ -33,6 +33,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define TAG "WiFi "
 
 static int s_retry_num = 0;
+int wifi_connected = 0;
 
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data)
@@ -113,6 +114,7 @@ void wifi_init_sta(const char *ssid, const char *password)
     {
         ESP_LOGI(TAG, "connected to ap SSID:%s",
                  ssid);
+        wifi_connected = 1;
     }
     else if (bits & WIFI_FAIL_BIT)
     {
