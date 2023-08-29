@@ -26,6 +26,7 @@
 #include "mqtt_helper.h"
 #include "sensors.h"
 #include "reset.h"
+#include "plant_manager.h"
 
 #define TAG "main"
 #define DEBUG 0
@@ -70,25 +71,33 @@ void app_main(void)
 
     initialize_reset_btn(); // Initialize button btn first to avoid block during wifi sta
 
-    if(is_already_registered()){
+    if (is_already_registered())
+    {
         ESP_LOGI(TAG, "Already registered, trying to connect");
         init_wifi_connection();
-    }else {
+    }
+    else
+    {
         ESP_LOGW(TAG, "Starting smartconfig");
-        initialise_smartconfig();
+        initialise_smartconfig(0);
     }
 
-    if(uuid_exists() == 0) {
+    if (uuid_exists() == 0)
+    {
         char *uuid = generate_uuid();
         write_key("uuid", uuid);
-    }else {
-        uuid = malloc(sizeof(char)* UUID_LEN);
+    }
+    else
+    {
+        uuid = malloc(sizeof(char) * UUID_LEN);
         uuid = read_key("uuid", UUID_LEN);
     }
-
-    // SensorTask *sensors_info = malloc(sizeof(SensorTask));
-    // strcpy(temp->uuid, uuid);
-    // temp->client = mqtt_app_start();
-    // // strcpy(uuid_sensor, uuid);
-    // // client_sensor = mqtt_app_start();
+    
+        esp_log_level_set("*", ESP_LOG_INFO);
+    esp_log_level_set("MQTT_CLIENT", ESP_LOG_DEBUG);
+    esp_log_level_set("TRANSPORT_TCP", ESP_LOG_DEBUG);
+    esp_log_level_set("TRANSPORT_SSL", ESP_LOG_DEBUG);
+    esp_log_level_set("TRANSPORT", ESP_LOG_DEBUG);
+    esp_log_level_set("OUTBOX", ESP_LOG_DEBUG);
+    xTaskCreate(&plant_task, "plant_task", 8192, uuid, 5, &plant_task_handle);
 }

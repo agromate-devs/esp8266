@@ -14,10 +14,17 @@
 #include "freertos/task.h"
 #include <esp_log.h>
 #include "../uuid/uuid.h"
+#include "sensors.h"
+#include "rom/gpio.h"
 
 #define DELAY(x) vTaskDelay(x / portTICK_PERIOD_MS)
 #define GPIO_PIN 5
 #define DHT_GPIO 5 // D1 pin
+#define HUMIDIFIER_GPIO GPIO_NUM_14   // D5 pin
+
+#define TOLLERANCE 10
+#define VALUE_IN_TOLLERANCE(x, a, tollerance) (x > a + tollerance && x < a - tollerance)
+#define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_NUM_14))
 
 int *temp_history_hour;
 int *humidity_history_hour;
@@ -27,6 +34,19 @@ static int media_hum;
 static char uuid_sensor[UUID_LEN];
 static esp_mqtt_client_handle_t client_sensor;
 
+void init_humidifier() {
+    gpio_pad_select_gpio(HUMIDIFIER_GPIO);
+    gpio_set_direction (HUMIDIFIER_GPIO, GPIO_MODE_OUTPUT);
+}
+
+void start_humidifier() {
+    gpio_set_level(HUMIDIFIER_GPIO, 1);
+}
+
+void stop_humidifier() {
+    gpio_set_level(HUMIDIFIER_GPIO, 0);
+}
+
 void temperature_task(void *arg)
 {
     int *temp_history_hour = malloc(sizeof(int) * 60);
@@ -35,16 +55,32 @@ void temperature_task(void *arg)
     {
         ESP_LOGE("dht11", "Error allocating memory. Free memory %d", esp_get_free_heap_size());
     }
+    TemperatureTask *limits = (TemperatureTask *)arg;
 
     ESP_ERROR_CHECK(dht_init(DHT_GPIO, false));
     DELAY(2000);
     int16_t humidity = 0;
     int16_t temperature = 0;
     int current_minute = 0;
+    init_humidifier();
+    int humidifier = 0;
     while (1)
     {
         if (dht_read_data(DHT_TYPE_DHT11, DHT_GPIO, &humidity, &temperature) == ESP_OK)
         {
+            ESP_LOGI("sensors", "Humidity: %d, Temperature: %d\n, HUM_LIMIT: %d, TEMP_LIMIT: %d", humidity, temperature, limits->humidity_limit, limits->temperature_limit);
+            if(!VALUE_IN_TOLLERANCE(humidity, limits->humidity_limit, TOLLERANCE) && !humidifier) {
+                // Start humidifier
+                ESP_LOGI("sensors", "Start humidifier");
+                start_humidifier();
+                humidifier = 1;
+                ESP_LOGI("sensors", "HUMIDIFIER_STATUS: %d\n", humidifier);
+            } else if(humidifier && VALUE_IN_TOLLERANCE(humidity, limits->humidity_limit, TOLLERANCE)) {
+                // Stop humidifier
+                ESP_LOGI("sensors", "Stop humidifier");
+                stop_humidifier();
+                humidifier = 0;
+            }
             if (subscribed)
             {
                 if (current_minute == 59)
@@ -105,19 +141,19 @@ void read_hygrometer(void *arg)
             ESP_ERROR_CHECK(adc_read(data));
             gpio_set_level(GPIO_PIN, 0);
             soil_humidity_history_hour[current_minute] = *data;
-            DELAY(60000);
+            DELAY(60000);   // Delay for 1 minute
             current_minute++;
         }
     }
 }
 
-void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client)
+void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client, TemperatureTask *limits)
 {
     strcpy(uuid_sensor, uuid);
     client_sensor = client;
     temp_history_hour = malloc(sizeof(int) * 60);
     humidity_history_hour = malloc(sizeof(int) * 60);
     soil_humidity_history_hour = malloc(sizeof(uint16_t) * 60);
-    xTaskCreate(temperature_task, "temperature task", 2048, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(temperature_task, "temperature task", 2048, limits, tskIDLE_PRIORITY, NULL);
     xTaskCreate(read_hygrometer, "hygrometer task", 2048, NULL, tskIDLE_PRIORITY, NULL);
 }

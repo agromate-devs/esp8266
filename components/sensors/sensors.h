@@ -1,8 +1,14 @@
 #include "mqtt_client.h"
 
-void init_sensors_mqtt();
-
 typedef struct SensorTask {
     esp_mqtt_client_handle_t client;
     char *uuid;
 } SensorTask;
+
+typedef struct TemperatureTask {
+    int temperature_limit;
+    int humidity_limit;
+} TemperatureTask;
+
+void temperature_task(void *arg);
+void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client, TemperatureTask *limits);
