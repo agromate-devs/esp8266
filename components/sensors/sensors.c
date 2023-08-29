@@ -84,7 +84,7 @@ void temperature_task(void *arg)
                 stop_humidifier();
                 humidifier = 0;
             }
-            if (subscribed)
+            if (connected)
             {
                 if(DEBUG_DHT_MQTT) {
                     char *message = create_dht_json(temperature, humidity, 0, uuid_sensor);
@@ -130,7 +130,7 @@ void read_hygrometer(void *arg)
     int media_soil_hum = 0;
     while (1)
     {
-        if (subscribed)
+        if (connected)
         {
             if (current_minute == 59)
             {
