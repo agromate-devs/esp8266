@@ -26,6 +26,9 @@
 #define VALUE_IN_TOLLERANCE(x, a, tollerance) (x > a + tollerance && x < a - tollerance)
 #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_NUM_14))
 
+#define DEBUG_DHT_MQTT 1    // CHANGE IT IN PRODUCTION!
+#define DELAY_TIME DEBUG_DHT_MQTT ? 10000 : 60000  // 10 seconds if we are in debug mode else 1 minute
+
 int *temp_history_hour;
 int *humidity_history_hour;
 uint16_t *soil_humidity_history_hour;
@@ -83,6 +86,12 @@ void temperature_task(void *arg)
             }
             if (subscribed)
             {
+                if(DEBUG_DHT_MQTT) {
+                    char *message = create_dht_json(temperature, humidity, 0, uuid_sensor);
+                    esp_mqtt_client_publish(client_sensor, "sdk/test/python", message, 0, 0, 0);
+                    ESP_LOGW("sensors", "DEV CODE DETECTED! If you are in production mode set DEBUG_DHT_MQTT to 0");
+                }
+
                 if (current_minute == 59)
                 { // 60 finish to 59 since we start from 0
                     media_temp = 0;
@@ -110,7 +119,7 @@ void temperature_task(void *arg)
         {
             ESP_LOGE("DHT11", "Fail to get dht temperature data\n");
         }
-        DELAY(60000); // Delay for 1 minute
+        DELAY(DELAY_TIME); // Delay for 1 minute
     }
     vTaskDelete(NULL);
 }
@@ -141,7 +150,7 @@ void read_hygrometer(void *arg)
             ESP_ERROR_CHECK(adc_read(data));
             gpio_set_level(GPIO_PIN, 0);
             soil_humidity_history_hour[current_minute] = *data;
-            DELAY(60000);   // Delay for 1 minute
+            DELAY(DELAY_TIME);   // Delay for 1 minute
             current_minute++;
         }
     }
@@ -155,5 +164,5 @@ void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client, TemperatureT
     humidity_history_hour = malloc(sizeof(int) * 60);
     soil_humidity_history_hour = malloc(sizeof(uint16_t) * 60);
     xTaskCreate(temperature_task, "temperature task", 2048, limits, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(read_hygrometer, "hygrometer task", 2048, NULL, tskIDLE_PRIORITY, NULL);
+    // xTaskCreate(read_hygrometer, "hygrometer task", 2048, NULL, tskIDLE_PRIORITY, NULL);
 }
