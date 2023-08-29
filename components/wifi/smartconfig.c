@@ -135,12 +135,23 @@ void smartconfig_example_task(void* parm)
     }
 }
 
-void initialise_smartconfig()
+/// @brief Initialize smartconfig
+/// @param reset Initialize smartconfig if true
+void initialise_smartconfig(int reset)
 {
-    tcpip_adapter_init();
+    if(reset){
+        ESP_LOGI(TAG, "Stop wifi");
+        ESP_ERROR_CHECK(esp_wifi_stop());
+        ESP_ERROR_CHECK(esp_wifi_deinit());
+    }else {
+        ESP_LOGI(TAG, "Init TCP/IP stack");
+        tcpip_adapter_init();
+    }
     s_wifi_event_group = xEventGroupCreate();
 
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    if(!reset) {
+        ESP_ERROR_CHECK(esp_event_loop_create_default());
+    }
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 

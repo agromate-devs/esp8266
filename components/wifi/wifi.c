@@ -35,6 +35,13 @@ static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 int wifi_connected = 0;
 
+void reset_wifi_credentials() {
+    clear_key("ssid");
+    clear_key("password");
+    ESP_LOGW(TAG, "Starting smartconfig");
+    initialise_smartconfig(0);
+}
+
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data)
 {
@@ -53,6 +60,8 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         else
         {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+            ESP_LOGW(TAG, "Cannot connect to the AP after %d retries. Starting smart config.", s_retry_num);
+            reset_wifi_credentials();
         }
         ESP_LOGI(TAG, "connect to the AP fail");
     }
@@ -152,11 +161,4 @@ void init_wifi_connection()
     // We can destroy the SSID and password now that are stored in wifi_config and save some bytes.
     free(ssid);
     free(password);
-}
-
-void reset_wifi_credentials() {
-    clear_key("ssid");
-    clear_key("password");
-    ESP_LOGW(TAG, "Starting smartconfig");
-    initialise_smartconfig();
 }

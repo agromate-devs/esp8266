@@ -1,1 +1,1 @@
-void initialise_smartconfig(void);
+void initialise_smartconfig(int reset);
