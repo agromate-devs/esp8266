@@ -82,18 +82,13 @@ void app_main(void)
         initialise_smartconfig(0);
     }
 
-    if (uuid_exists() == 0)
-    {
-        char *uuid = generate_uuid();
-        write_key("uuid", uuid);
-    }
-    else
+    if (uuid_exists())
     {
         uuid = malloc(sizeof(char) * UUID_LEN);
         uuid = read_key("uuid", UUID_LEN);
     }
     
-        esp_log_level_set("*", ESP_LOG_INFO);
+    esp_log_level_set("*", ESP_LOG_INFO);
     esp_log_level_set("MQTT_CLIENT", ESP_LOG_DEBUG);
     esp_log_level_set("TRANSPORT_TCP", ESP_LOG_DEBUG);
     esp_log_level_set("TRANSPORT_SSL", ESP_LOG_DEBUG);

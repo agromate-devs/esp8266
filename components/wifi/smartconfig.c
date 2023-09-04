@@ -75,7 +75,7 @@ void event_handler(void* arg, esp_event_base_t event_base,
 #endif
         smartconfig_event_got_ssid_pswd_t* evt = (smartconfig_event_got_ssid_pswd_t*)event_data;
         wifi_config_t wifi_config;
-        uint8_t rvd_data[33] = { 0 };
+        uint8_t new_uuid[33] = { 0 };
 
         bzero(&wifi_config, sizeof(wifi_config_t));
         memcpy(wifi_config.sta.ssid, evt->ssid, sizeof(wifi_config.sta.ssid));
@@ -93,10 +93,11 @@ void event_handler(void* arg, esp_event_base_t event_base,
         ESP_LOGI(TAG, "PASSWORD:%s", password);
 #endif
         if (evt->type == SC_TYPE_ESPTOUCH_V2) {
-            ESP_ERROR_CHECK( esp_smartconfig_get_rvd_data(rvd_data, sizeof(rvd_data)) );
-#ifdef DEBUG
-            ESP_LOGI(TAG, "RVD_DATA:%s", rvd_data);
-#endif
+            ESP_ERROR_CHECK(esp_smartconfig_get_rvd_data(new_uuid, sizeof(new_uuid)) );
+            ESP_LOGI(TAG, "UUID_FROM_PHONE:%s", new_uuid);
+            if(new_uuid != NULL) {
+                write_key("uuid", (char *)new_uuid);
+            }
         }
 
         ESP_ERROR_CHECK(esp_wifi_disconnect());

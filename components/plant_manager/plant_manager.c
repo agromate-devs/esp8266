@@ -37,6 +37,8 @@
 #include "sensor.h"
 #include "../wifi/wifi.h"
 #include "../mqtt_helper/mqtt_helper.h"
+#include "../keystore/keystore.h"
+#include "uuid.h"
 
 #define WEB_SERVER "www.bysiftg28d.execute-api.eu-central-1.amazonaws.com"
 #define WEB_PORT 443
@@ -174,6 +176,10 @@ void plant_task(void *arg) {
     ESP_LOGI(TAG, "UUID: %s", uuid);
     while(1){
         if(wifi_connected) {
+            if(strcmp(uuid, "") == 0){
+                uuid = malloc(sizeof(char) * UUID_LEN);
+                uuid = read_key("uuid", UUID_LEN);
+            }
             char *response = https_get_task();
             ESP_LOGI(TAG, "Response: %s", response);
             TemperatureTask limits = parse_raw_response(response);
