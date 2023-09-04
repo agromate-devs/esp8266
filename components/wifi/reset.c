@@ -5,6 +5,7 @@
 #include "driver/gpio.h"
 #include "wifi.h"
 #include "esp_log.h"
+#include "keystore.h"
 
 #define TAG "WIFI Reset"
 
@@ -25,6 +26,7 @@ void LED_Control_Task(void *params)
         {
             ESP_LOGW(TAG, "Resetting wifi");
             // TODO: Toggle LED status
+	        clear_key("uuid");
             reset_wifi_credentials();
         }
     }
