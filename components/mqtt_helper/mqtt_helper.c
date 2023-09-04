@@ -17,6 +17,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED:
             connected = 1;
+            ESP_LOGI(TAG, "MQTT connected");
             break;
         case MQTT_EVENT_DISCONNECTED:
             connected = 0;
@@ -53,7 +54,7 @@ esp_mqtt_client_handle_t mqtt_app_start(void)
         .event_handle = mqtt_event_handler,
         .client_cert_pem = client_cert,
         .client_key_pem = privkey,
-        .client_id = "basicPubSub"
+        .client_id = "sdk-nodejs-v2"
     };
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_start(client);

@@ -27,7 +27,7 @@
 #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_NUM_14))
 
 #define DEBUG_DHT_MQTT 1    // CHANGE IT IN PRODUCTION!
-#define DELAY_TIME DEBUG_DHT_MQTT ? 10000 : 60000  // 10 seconds if we are in debug mode else 1 minute
+#define DELAY_TIME 10000  // 10 seconds if we are in debug mode else 1 minute
 
 int *temp_history_hour;
 int *humidity_history_hour;
@@ -88,7 +88,7 @@ void temperature_task(void *arg)
             {
                 if(DEBUG_DHT_MQTT) {
                     char *message = create_dht_json(temperature, humidity, 0, uuid_sensor);
-                    esp_mqtt_client_publish(client_sensor, "sdk/test/python", message, 0, 0, 0);
+                    esp_mqtt_client_publish(client_sensor, "sdk/test/js", message, 0, 0, 0);
                     ESP_LOGW("sensors", "DEV CODE DETECTED! If you are in production mode set DEBUG_DHT_MQTT to 0");
                 }
 
