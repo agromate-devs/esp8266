@@ -27,6 +27,7 @@ void LED_Control_Task(void *params)
             ESP_LOGW(TAG, "Resetting wifi");
             // TODO: Toggle LED status
 	        clear_key("uuid");
+		clear_key("current_plant");	// Remove the plant registered to sensor
             reset_wifi_credentials();
         }
     }
