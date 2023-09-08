@@ -17,6 +17,7 @@
 // #include "sensors.h"
 #include "rom/gpio.h"
 #include "keystore.h"
+#include "json_helper.h"
 
 #define DELAY(x) vTaskDelay(x / portTICK_PERIOD_MS)
 #define GPIO_PIN 5
