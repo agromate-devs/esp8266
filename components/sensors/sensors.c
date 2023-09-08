@@ -14,8 +14,10 @@
 #include "freertos/task.h"
 #include <esp_log.h>
 #include "../uuid/uuid.h"
-#include "sensors.h"
+// #include "sensors.h"
 #include "rom/gpio.h"
+#include "keystore.h"
+#include "plant_manager.h"
 
 #define DELAY(x) vTaskDelay(x / portTICK_PERIOD_MS)
 #define GPIO_PIN 5
@@ -36,6 +38,7 @@ static int media_temp;
 static int media_hum;
 static char uuid_sensor[UUID_LEN];
 static esp_mqtt_client_handle_t client_sensor;
+TaskHandle_t temperature_task_handle;
 
 void init_humidifier() {
     gpio_pad_select_gpio(HUMIDIFIER_GPIO);
@@ -156,13 +159,15 @@ void read_hygrometer(void *arg)
     }
 }
 
-void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client, TemperatureTask *limits)
+void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client)
 {
     strcpy(uuid_sensor, uuid);
     client_sensor = client;
     temp_history_hour = malloc(sizeof(int) * 60);
     humidity_history_hour = malloc(sizeof(int) * 60);
     soil_humidity_history_hour = malloc(sizeof(uint16_t) * 60);
-    xTaskCreate(temperature_task, "temperature task", 2048, limits, tskIDLE_PRIORITY, NULL);
+    char *current_plant = read_key("current_plant", 700);
+    TemperatureTask limits = parse_raw_response(current_plant);
+    xTaskCreate(temperature_task, "temperature task", 2048, &limits, tskIDLE_PRIORITY, &temperature_task_handle);
     // xTaskCreate(read_hygrometer, "hygrometer task", 2048, NULL, tskIDLE_PRIORITY, NULL);
 }

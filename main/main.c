@@ -24,7 +24,7 @@
 #include "json.h"
 #include "uuid.h"
 #include "mqtt_helper.h"
-#include "sensors.h"
+// #include "sensors.h"
 #include "reset.h"
 #include "plant_manager.h"
 
@@ -88,11 +88,5 @@ void app_main(void)
         uuid = read_key("uuid", UUID_LEN);
     }
     
-    esp_log_level_set("*", ESP_LOG_INFO);
-    esp_log_level_set("MQTT_CLIENT", ESP_LOG_DEBUG);
-    esp_log_level_set("TRANSPORT_TCP", ESP_LOG_DEBUG);
-    esp_log_level_set("TRANSPORT_SSL", ESP_LOG_DEBUG);
-    esp_log_level_set("TRANSPORT", ESP_LOG_DEBUG);
-    esp_log_level_set("OUTBOX", ESP_LOG_DEBUG);
-    xTaskCreate(&plant_task, "plant_task", 8192, uuid, 5, &plant_task_handle);
+    mqtt_app_start();
 }

@@ -1,6 +1,11 @@
 #include "mqtt_client.h"
 #include "secrets.h"
 #include "esp_log.h"
+#include "uuid.h"
+#include "keystore.h"
+#include <string.h>
+#include "plant_manager.h"
+// #include "sensor.h"
 
 #define TAG "MQTT"
 #define SUB "esp8266/sub"
@@ -8,6 +13,7 @@
 #define DHT_GPIO 5 // D1 pin
 
 int connected = 0;
+esp_mqtt_client_handle_t client;
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
@@ -18,6 +24,12 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
         case MQTT_EVENT_CONNECTED:
             connected = 1;
             ESP_LOGI(TAG, "MQTT connected");
+            char *uuid = read_key("uuid", UUID_LEN);
+            ESP_LOGI(TAG, "UUID: %s", uuid);
+            char mqtt_topic[52] = "sensor/plants/"; // The UUID is 37 characters long plus original mqtt_topic will be approximately 52 characters long
+            strcat(mqtt_topic, uuid);
+            esp_mqtt_client_subscribe(client, mqtt_topic, 0);       // Listen for changes
+            xTaskCreate(&plant_task, "plant_task", 8192, uuid, 5, &plant_task_handle);
             break;
         case MQTT_EVENT_DISCONNECTED:
             connected = 0;
@@ -35,6 +47,16 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
             printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
             printf("DATA=%.*s\r\n", event->data_len, event->data);
+            write_key("current_plant", event->data);
+            if(plant_assigned){
+                vTaskDelete(temperature_task_handle);   // Destroy the old task
+                char *uuid = read_key("uuid", UUID_LEN);
+                init_sensors_mqtt(uuid, client);    // Reinit all
+            }else {
+                plant_assigned = 1;
+                char *uuid = read_key("uuid", UUID_LEN);
+                init_sensors_mqtt(uuid, client);
+            }
             break;
         case MQTT_EVENT_ERROR:
             ESP_LOGE(TAG, "MQTT_EVENT_ERROR");
@@ -47,16 +69,15 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     return ESP_OK;
 }
 
-esp_mqtt_client_handle_t mqtt_app_start(void)
+void mqtt_app_start(void)
 {
     const esp_mqtt_client_config_t mqtt_cfg = {
         .uri = MQTT_URL,
         .event_handle = mqtt_event_handler,
         .client_cert_pem = client_cert,
         .client_key_pem = privkey,
-        .client_id = "sdk-nodejs-v2"
+        .client_id = "ESP8266"
     };
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+    client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_start(client);
-    return client;
 }

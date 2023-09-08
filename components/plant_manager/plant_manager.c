@@ -40,9 +40,9 @@
 #include "../keystore/keystore.h"
 #include "uuid.h"
 
-#define WEB_SERVER "www.bysiftg28d.execute-api.eu-central-1.amazonaws.com"
+#define WEB_SERVER "www.dlc52l1dnc.execute-api.eu-central-1.amazonaws.com"
 #define WEB_PORT 443
-#define WEB_URL "https://bysiftg28d.execute-api.eu-central-1.amazonaws.com/plant_info_api?user_id=uid&sensor_id=UUID"
+#define WEB_URL "https://dlc52l1dnc.execute-api.eu-central-1.amazonaws.com/plant_info_api?user_id=uid&sensor_id=UUID"
 
 #define BUFFER_SIZE 512
 #define MAX_RESPONSE_LENGHT 1024
@@ -57,6 +57,8 @@ static const char *REQUEST = "GET " WEB_URL " HTTP/1.0\r\n"
                              "Host: " WEB_SERVER "\r\n"
                              "User-Agent: esp-idf/1.0 esp32\r\n"
                              "\r\n";
+
+int plant_assigned = 0;
 
 void read_response(struct esp_tls *tls, char *response)
 {
@@ -104,6 +106,7 @@ char *https_get_task(void)
     else
     {
         ESP_LOGE(TAG, "Connection failed...");
+	ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
         goto exit;
     }
 
@@ -121,6 +124,7 @@ char *https_get_task(void)
         else if (ret != ESP_TLS_ERR_SSL_WANT_READ && ret != ESP_TLS_ERR_SSL_WANT_WRITE)
         {
             ESP_LOGE(TAG, "esp_tls_conn_write  returned 0x%x", ret);
+	        ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
             goto exit;
         }
     } while (written_bytes < strlen(REQUEST));
@@ -153,11 +157,10 @@ double parse_float(cJSON *json, char *key) {
 
 void cleanup_response(char *response) {
     char *start = strstr(response, "{");  // Begin of JSON
-    strcpy(response, start);    // Copy from start to end of JSON body in response
+    strncpy(response, start, strlen(start) - 1);    // Copy from start to end of JSON body in response and avoid the last ] in response
 }
 
-TemperatureTask parse_raw_response(char *response){
-    cleanup_response(response); // Remove header of response and use only JSON body
+TemperatureTask parse_raw_response(char *response) {
     cJSON *json = cJSON_Parse(response);
     double default_humidity_value = parse_float(json, "default_humidity");
     double default_temperature_value = parse_float(json, "default_temperature");
@@ -176,16 +179,26 @@ void plant_task(void *arg) {
     ESP_LOGI(TAG, "UUID: %s", uuid);
     while(1){
         if(wifi_connected) {
-            if(strcmp(uuid, "") == 0){
-                uuid = malloc(sizeof(char) * UUID_LEN);
-                uuid = read_key("uuid", UUID_LEN);
+            char *current_plant = read_key("current_plant", 500);
+            char *response = NULL;
+            if(current_plant == NULL){
+                ESP_LOGI(TAG, "CURRENT_PLANT IS NULL");
+                response = https_get_task();
+                if(response != NULL){
+                    cleanup_response(response); // Remove header of response and use only JSON body
+                    ESP_LOGI(TAG, "Response: %s", response);
+                    write_key("current_plant", response);
+                }else {
+                    // PANIC HERE
+                }
             }
-            char *response = https_get_task();
-            ESP_LOGI(TAG, "Response: %s", response);
-            TemperatureTask limits = parse_raw_response(response);
-            init_sensors_mqtt(uuid, mqtt_app_start(), &limits);
-            // xTaskCreate(temperature_task, "temperature task", 2048, &limits, tskIDLE_PRIORITY, NULL);
-            vTaskDelete(plant_task_handle);
+
+            if(response != NULL || current_plant != NULL){
+                plant_assigned = 1;
+                init_sensors_mqtt(uuid, client);
+            }
+            
+            vTaskDelete(plant_task_handle); // TODO: Use NULL here
         }else {
             ESP_LOGI(TAG, "Waiting for wifi connection...");
         }
