@@ -26,7 +26,6 @@
 #include "mqtt_helper.h"
 // #include "sensors.h"
 #include "reset.h"
-#include "plant_manager.h"
 
 #define TAG "main"
 #define DEBUG 0
@@ -88,5 +87,5 @@ void app_main(void)
         uuid = read_key("uuid", UUID_LEN);
     }
     
-    mqtt_app_start();
+    xTaskCreate(&mqtt_task, "mqtt_task", 8192, NULL, 5, NULL);
 }

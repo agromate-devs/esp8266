@@ -5,6 +5,8 @@
 #include "keystore.h"
 #include <string.h>
 #include "sensors.h"
+#include "delay.h"
+#include "wifi.h"
 
 #define TAG "MQTT"
 #define SUB "esp8266/sub"
@@ -13,6 +15,7 @@
 
 int connected = 0;
 esp_mqtt_client_handle_t client;
+static char *uuid = NULL;
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
@@ -23,8 +26,6 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
         case MQTT_EVENT_CONNECTED:
             connected = 1;
             ESP_LOGI(TAG, "MQTT connected");
-            char *uuid = read_key("uuid", UUID_LEN);
-            ESP_LOGI(TAG, "UUID: %s", uuid);
             char mqtt_topic[52] = "sensor/plants/"; // The UUID is 37 characters long plus original mqtt_topic will be approximately 52 characters long
             strcat(mqtt_topic, uuid);
             esp_mqtt_client_subscribe(client, mqtt_topic, 0);       // Listen for changes
@@ -48,11 +49,9 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
             write_key("current_plant", event->data);
             if(plant_assigned){
                 vTaskDelete(temperature_task_handle);   // Destroy the old task
-                char *uuid = read_key("uuid", UUID_LEN);
                 init_sensors_mqtt(uuid, client);    // Reinit all
             }else {
                 plant_assigned = 1;
-                char *uuid = read_key("uuid", UUID_LEN);
                 init_sensors_mqtt(uuid, client);
             }
             break;
@@ -78,4 +77,18 @@ void mqtt_app_start(void)
     };
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_start(client);
+}
+
+void mqtt_task(void *arg) {
+    uuid = read_key("uuid", UUID_LEN);
+    while(1){
+        if(wifi_connected) {
+            mqtt_app_start();
+            init_sensors_mqtt(uuid, client);
+            vTaskDelete(NULL);  // Delete the task since sensors have been initialized
+        }else {
+            ESP_LOGI(TAG, "Waiting for wifi connection...");
+        }
+        DELAY(5000);    // Wait 5 seconds before trying again
+    }
 }
