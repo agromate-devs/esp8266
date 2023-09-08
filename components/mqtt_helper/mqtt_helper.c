@@ -4,8 +4,7 @@
 #include "uuid.h"
 #include "keystore.h"
 #include <string.h>
-#include "plant_manager.h"
-// #include "sensor.h"
+#include "sensors.h"
 
 #define TAG "MQTT"
 #define SUB "esp8266/sub"
@@ -29,7 +28,6 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
             char mqtt_topic[52] = "sensor/plants/"; // The UUID is 37 characters long plus original mqtt_topic will be approximately 52 characters long
             strcat(mqtt_topic, uuid);
             esp_mqtt_client_subscribe(client, mqtt_topic, 0);       // Listen for changes
-            xTaskCreate(&plant_task, "plant_task", 8192, uuid, 5, &plant_task_handle);
             break;
         case MQTT_EVENT_DISCONNECTED:
             connected = 0;

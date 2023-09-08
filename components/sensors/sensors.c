@@ -17,7 +17,6 @@
 // #include "sensors.h"
 #include "rom/gpio.h"
 #include "keystore.h"
-#include "plant_manager.h"
 
 #define DELAY(x) vTaskDelay(x / portTICK_PERIOD_MS)
 #define GPIO_PIN 5
@@ -39,6 +38,7 @@ static int media_hum;
 static char uuid_sensor[UUID_LEN];
 static esp_mqtt_client_handle_t client_sensor;
 TaskHandle_t temperature_task_handle;
+int plant_assigned = 0;
 
 void init_humidifier() {
     gpio_pad_select_gpio(HUMIDIFIER_GPIO);
@@ -169,5 +169,6 @@ void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client)
     char *current_plant = read_key("current_plant", 700);
     TemperatureTask limits = parse_raw_response(current_plant);
     xTaskCreate(temperature_task, "temperature task", 2048, &limits, tskIDLE_PRIORITY, &temperature_task_handle);
+    plant_assigned = 1;
     // xTaskCreate(read_hygrometer, "hygrometer task", 2048, NULL, tskIDLE_PRIORITY, NULL);
 }

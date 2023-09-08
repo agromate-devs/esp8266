@@ -14,3 +14,4 @@ typedef struct TemperatureTask {
 
 void temperature_task(void *arg);
 void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client);
+extern int plant_assigned;
