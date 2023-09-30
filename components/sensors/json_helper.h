@@ -1,3 +1,3 @@
 #include "sensors.h"
 
-TemperatureTask parse_raw_response(char *response);
+Plant parse_raw_response(char *response);

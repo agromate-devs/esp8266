@@ -7,10 +7,13 @@ typedef struct SensorTask {
     char *uuid;
 } SensorTask;
 
-typedef struct TemperatureTask {
+typedef struct Plant {
     int temperature_limit;
     int humidity_limit;
-} TemperatureTask;
+    char *user_id;
+    int temperature_notification;
+    int humidity_notification;
+} Plant;
 
 void temperature_task(void *arg);
 void init_sensors_mqtt(char *uuid, esp_mqtt_client_handle_t client);

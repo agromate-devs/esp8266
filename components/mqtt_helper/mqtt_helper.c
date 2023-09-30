@@ -48,13 +48,13 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
             printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
             printf("DATA=%.*s\r\n", event->data_len, event->data);
             write_key("current_plant", event->data);
-            if(plant_assigned){
+/*            if(plant_assigned){
                 vTaskDelete(temperature_task_handle);   // Destroy the old task
                 init_sensors_mqtt(uuid, client);    // Reinit all
             }else {
                 plant_assigned = 1;
                 init_sensors_mqtt(uuid, client);
-            }
+            }*/
             break;
         case MQTT_EVENT_ERROR:
             ESP_LOGE(TAG, "MQTT_EVENT_ERROR");
