@@ -28,7 +28,8 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
             ESP_LOGI(TAG, "MQTT connected");
             char mqtt_topic[52] = "sensor/plants/"; // The UUID is 37 characters long plus original mqtt_topic will be approximately 52 characters long
             strcat(mqtt_topic, uuid);
-            esp_mqtt_client_subscribe(client, mqtt_topic, 0);       // Listen for changes
+            esp_mqtt_client_subscribe(client, mqtt_topic, 0);   // Listen for changes
+            init_sensors_mqtt(uuid, client);
             break;
         case MQTT_EVENT_DISCONNECTED:
             connected = 0;
@@ -84,7 +85,6 @@ void mqtt_task(void *arg) {
     while(1){
         if(wifi_connected) {
             mqtt_app_start();
-            init_sensors_mqtt(uuid, client);
             vTaskDelete(NULL);  // Delete the task since sensors have been initialized
         }else {
             ESP_LOGI(TAG, "Waiting for wifi connection...");
